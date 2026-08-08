@@ -1,0 +1,2237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Caelos Snail Mail Service</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Text:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  :root {
+    --bg-deep: #0a0a0f;
+    --bg-mid: #12121a;
+    --bg-surface: #1a1a26;
+    --bg-raised: #22223a;
+    --gold: #c9a84c;
+    --gold-light: #e8c97a;
+    --gold-dim: #7a6030;
+    --teal: #2a7a7a;
+    --teal-light: #3db8b8;
+    --parchment: #f0e6c8;
+    --parchment-dark: #c8b48a;
+    --text-primary: #e8dcc8;
+    --text-secondary: #8a7a6a;
+    --text-dim: #4a4040;
+    --red-blood: #8a1a1a;
+    --border: rgba(201,168,76,0.2);
+    --border-bright: rgba(201,168,76,0.6);
+    --shadow: rgba(0,0,0,0.8);
+    --radius: 4px;
+    --transition: 0.3s ease;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg-deep);
+    color: var(--text-primary);
+    font-family: 'Crimson Text', Georgia, serif;
+    font-size: 18px;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── SCROLLBAR ── */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg-deep); }
+  ::-webkit-scrollbar-thumb { background: var(--gold-dim); border-radius: 3px; }
+
+  /* ── LOGIN SCREEN ── */
+  #login-screen {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    background: radial-gradient(ellipse at center, #1a1a2e 0%, #0a0a0f 70%);
+  }
+
+  .login-snail {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    animation: float 3s ease-in-out infinite;
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+  }
+
+  .login-title {
+    font-family: 'Cinzel', serif;
+    font-size: clamp(1.4rem, 4vw, 2.2rem);
+    color: var(--gold);
+    letter-spacing: 0.15em;
+    text-align: center;
+    margin-bottom: 0.3rem;
+  }
+
+  .login-subtitle {
+    font-family: 'Crimson Text', serif;
+    font-style: italic;
+    color: var(--text-secondary);
+    margin-bottom: 2.5rem;
+    font-size: 1rem;
+    letter-spacing: 0.05em;
+  }
+
+  .login-box {
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 2rem;
+    width: 100%;
+    max-width: 360px;
+    box-shadow: 0 8px 40px var(--shadow);
+  }
+
+  .login-box label {
+    display: block;
+    font-family: 'Cinzel', serif;
+    font-size: 0.7rem;
+    letter-spacing: 0.15em;
+    color: var(--gold-dim);
+    margin-bottom: 0.4rem;
+    text-transform: uppercase;
+  }
+
+  .login-box input {
+    width: 100%;
+    background: var(--bg-mid);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text-primary);
+    font-family: 'Crimson Text', serif;
+    font-size: 1.1rem;
+    padding: 0.6rem 0.8rem;
+    margin-bottom: 1.2rem;
+    outline: none;
+    transition: border-color var(--transition);
+  }
+
+  .login-box input:focus { border-color: var(--gold); }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    background: linear-gradient(135deg, var(--gold-dim), var(--gold));
+    color: var(--bg-deep);
+    border: none;
+    border-radius: var(--radius);
+    font-family: 'Cinzel', serif;
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    padding: 0.7rem 1.4rem;
+    cursor: pointer;
+    transition: all var(--transition);
+    text-transform: uppercase;
+  }
+
+  .btn:hover { background: linear-gradient(135deg, var(--gold), var(--gold-light)); transform: translateY(-1px); }
+  .btn:active { transform: translateY(0); }
+  .btn-full { width: 100%; }
+
+  .btn-ghost {
+    background: transparent;
+    color: var(--gold);
+    border: 1px solid var(--border);
+  }
+  .btn-ghost:hover { background: var(--bg-raised); border-color: var(--gold); }
+
+  .btn-danger {
+    background: linear-gradient(135deg, #5a1a1a, #8a2a2a);
+    color: var(--parchment);
+  }
+  .btn-danger:hover { background: linear-gradient(135deg, #8a2a2a, #aa3a3a); }
+
+  .btn-sm { font-size: 0.65rem; padding: 0.4rem 0.8rem; }
+
+  .login-error {
+    color: #cc4444;
+    font-size: 0.9rem;
+    text-align: center;
+    margin-top: 0.8rem;
+    display: none;
+  }
+
+  /* ── MAIN APP ── */
+  #app { display: none; min-height: 100vh; flex-direction: column; }
+
+  /* ── HEADER ── */
+  .app-header {
+    background: var(--bg-surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0.8rem 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .header-brand {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+  }
+
+  .header-brand-text {
+    font-family: 'Cinzel', serif;
+    font-size: clamp(0.8rem, 2vw, 1.1rem);
+    color: var(--gold);
+    letter-spacing: 0.1em;
+  }
+
+  .header-user {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    font-style: italic;
+  }
+
+  .header-actions { display: flex; align-items: center; gap: 1rem; }
+
+  /* ── NOTIFICATION ── */
+  .notif-wrapper {
+    position: relative;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .notif-icon {
+    font-size: 1.6rem;
+    display: inline-block;
+    position: relative;
+  }
+
+  .notif-icon.shaking {
+    animation: shake 0.5s ease-in-out infinite;
+  }
+
+  @keyframes shake {
+    0%, 100% { transform: rotate(0deg); }
+    15% { transform: rotate(-12deg); }
+    30% { transform: rotate(12deg); }
+    45% { transform: rotate(-8deg); }
+    60% { transform: rotate(8deg); }
+    75% { transform: rotate(-4deg); }
+    90% { transform: rotate(4deg); }
+  }
+
+  .notif-badge {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    background: var(--red-blood);
+    color: white;
+    border-radius: 50%;
+    width: 18px;
+    height: 18px;
+    font-size: 0.6rem;
+    font-family: 'JetBrains Mono', monospace;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+  }
+
+  .notif-text {
+    font-family: 'Cinzel', serif;
+    font-size: 0.65rem;
+    color: var(--gold);
+    letter-spacing: 0.1em;
+    white-space: nowrap;
+  }
+
+  /* ── TABS ── */
+  .app-tabs {
+    display: flex;
+    background: var(--bg-mid);
+    border-bottom: 1px solid var(--border);
+    overflow-x: auto;
+  }
+
+  .tab-btn {
+    font-family: 'Cinzel', serif;
+    font-size: 0.7rem;
+    letter-spacing: 0.12em;
+    color: var(--text-secondary);
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    padding: 0.8rem 1.2rem;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all var(--transition);
+    text-transform: uppercase;
+  }
+
+  .tab-btn:hover { color: var(--gold); }
+  .tab-btn.active { color: var(--gold); border-bottom-color: var(--gold); }
+
+  /* ── CONTENT AREAS ── */
+  .tab-content { display: none; padding: 1.5rem; max-width: 1200px; margin: 0 auto; width: 100%; }
+  .tab-content.active { display: block; }
+
+  /* ── INBOX ── */
+  .inbox-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+    gap: 0.8rem;
+  }
+
+  .section-title {
+    font-family: 'Cinzel', serif;
+    font-size: 1.1rem;
+    color: var(--gold);
+    letter-spacing: 0.1em;
+  }
+
+  .letter-list { display: flex; flex-direction: column; gap: 0.8rem; }
+
+  .letter-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1rem 1.2rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    cursor: pointer;
+    transition: all var(--transition);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .letter-card::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+    background: var(--gold);
+    opacity: 0;
+    transition: opacity var(--transition);
+  }
+
+  .letter-card:hover { border-color: var(--border-bright); background: var(--bg-raised); }
+  .letter-card:hover::before { opacity: 1; }
+  .letter-card.unread { border-left: 3px solid var(--gold); }
+  .letter-card.unread .letter-card-sender { color: var(--gold-light); }
+
+  .letter-card-seal {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
+    border: 1px solid var(--border);
+  }
+
+  .letter-card-seal-placeholder {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: var(--bg-raised);
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+    flex-shrink: 0;
+  }
+
+  .letter-card-info { flex: 1; min-width: 0; }
+  .letter-card-sender { font-weight: 600; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .letter-card-label { font-size: 0.85rem; color: var(--text-secondary); font-style: italic; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .letter-card-date { font-size: 0.75rem; color: var(--text-dim); font-family: 'JetBrains Mono', monospace; white-space: nowrap; }
+  .letter-card-type { font-size: 1.2rem; flex-shrink: 0; }
+
+  .empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: var(--text-secondary);
+    font-style: italic;
+  }
+
+  .empty-state .empty-icon { font-size: 3rem; margin-bottom: 1rem; opacity: 0.4; }
+
+  /* ── LETTER VIEWER OVERLAY ── */
+  #letter-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    background: rgba(0,0,0,0.92);
+    overflow: hidden;
+  }
+
+  #letter-overlay.active { display: flex; flex-direction: column; }
+
+  .overlay-ambient {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    overflow: hidden;
+    z-index: 0;
+  }
+
+  .overlay-content {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    align-items: center;
+  }
+
+  .overlay-header {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.5rem;
+    background: rgba(10,10,15,0.8);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+
+  .overlay-meta { flex: 1; }
+  .overlay-sender { font-family: 'Cinzel', serif; font-size: 1rem; color: var(--gold); }
+  .overlay-return { font-size: 0.85rem; color: var(--text-secondary); font-style: italic; }
+  .overlay-date { font-size: 0.75rem; color: var(--text-dim); font-family: 'JetBrains Mono', monospace; }
+
+  /* ── ENVELOPE ANIMATION ── */
+  #envelope-stage {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 1.5rem;
+    padding: 2rem;
+    width: 100%;
+  }
+
+  .envelope-wrapper {
+    position: relative;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+  }
+  .envelope-wrapper:hover { transform: scale(1.03); }
+
+  .envelope-body {
+    width: clamp(200px, 40vw, 320px);
+    aspect-ratio: 1.6;
+    background: linear-gradient(135deg, #c8b48a, #e8d8b0, #c8b48a);
+    border-radius: 4px;
+    position: relative;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+    overflow: visible;
+  }
+
+  .envelope-flap {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 55%;
+    background: linear-gradient(160deg, #d8c89a, #b8a07a);
+    clip-path: polygon(0 0, 100% 0, 50% 100%);
+    transform-origin: top center;
+    transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 2;
+  }
+
+  .envelope-flap.open {
+    transform: rotateX(180deg);
+  }
+
+  .envelope-lines {
+    position: absolute;
+    inset: 30% 15% 15%;
+    display: flex;
+    flex-direction: column;
+    gap: 8%;
+    justify-content: center;
+  }
+
+  .envelope-line {
+    height: 2px;
+    background: rgba(100,80,50,0.25);
+    border-radius: 1px;
+  }
+
+  .seal-wrapper {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 3;
+    cursor: pointer;
+  }
+
+  .seal-img {
+    width: clamp(50px, 8vw, 70px);
+    height: clamp(50px, 8vw, 70px);
+    border-radius: 50%;
+    object-fit: cover;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.6);
+    transition: all 0.3s ease;
+  }
+
+  .seal-shimmer {
+    animation: sealShimmer 2s ease-in-out infinite;
+  }
+
+  @keyframes sealShimmer {
+    0%, 100% { box-shadow: 0 2px 12px rgba(0,0,0,0.6), 0 0 0 rgba(201,168,76,0); }
+    50% { box-shadow: 0 2px 20px rgba(0,0,0,0.6), 0 0 20px rgba(201,168,76,0.5); }
+  }
+
+  .seal-crack {
+    animation: sealCrack 0.4s ease-out forwards;
+  }
+
+  @keyframes sealCrack {
+    0% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.2) rotate(15deg); opacity: 0.7; }
+    100% { transform: scale(0) rotate(30deg); opacity: 0; }
+  }
+
+  .envelope-hint {
+    font-family: 'Cinzel', serif;
+    font-size: 0.7rem;
+    color: var(--gold-dim);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }
+
+  /* ── LETTER READING VIEW ── */
+  #letter-reading {
+    display: none;
+    flex: 1;
+    width: 100%;
+    flex-direction: column;
+    align-items: center;
+    padding: 1.5rem;
+    overflow-y: auto;
+    gap: 1rem;
+  }
+
+  #letter-reading.active { display: flex; }
+
+  .letter-image-container {
+    position: relative;
+    max-width: min(500px, 80vw);
+    width: 100%;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.8);
+    border-radius: 2px;
+    overflow: hidden;
+    cursor: zoom-in;
+    transition: transform 0.3s ease;
+  }
+
+  .letter-image-container.zoomed {
+    cursor: zoom-out;
+    max-width: min(900px, 95vw);
+    transform: none;
+  }
+
+  .letter-image-container img {
+    width: 100%;
+    display: block;
+    animation: letterSlideIn 0.5s cubic-bezier(0.4,0,0.2,1);
+  }
+
+  @keyframes letterSlideIn {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .page-controls {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .page-indicator {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+  }
+
+  /* ── PARCEL VIEW ── */
+  #parcel-stage {
+    display: none;
+    flex: 1;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 1.5rem;
+    padding: 2rem;
+  }
+
+  #parcel-stage.active { display: flex; }
+
+  .parcel-box-wrapper {
+    cursor: pointer;
+    position: relative;
+    transition: transform 0.3s;
+  }
+  .parcel-box-wrapper:hover { transform: scale(1.03); }
+
+  .parcel-box {
+    width: clamp(140px, 25vw, 200px);
+    height: clamp(100px, 18vw, 150px);
+    background: linear-gradient(135deg, #8a6a3a, #c8a05a, #8a6a3a);
+    border-radius: 4px;
+    position: relative;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+    border: 2px solid #6a4a2a;
+  }
+
+  .parcel-lid {
+    position: absolute;
+    top: 0; left: -4px; right: -4px;
+    height: 35%;
+    background: linear-gradient(135deg, #a07840, #d8b060);
+    border-radius: 4px 4px 0 0;
+    border: 2px solid #6a4a2a;
+    transform-origin: top center;
+    transition: transform 0.7s cubic-bezier(0.4,0,0.2,1);
+    z-index: 2;
+  }
+
+  .parcel-lid.open { transform: rotateX(-130deg); }
+
+  .parcel-ribbon-h {
+    position: absolute;
+    top: 0; bottom: 0;
+    left: 50%; transform: translateX(-50%);
+    width: 14px;
+    background: linear-gradient(90deg, #6a1a1a, #aa3a3a, #6a1a1a);
+    z-index: 1;
+  }
+
+  .parcel-ribbon-v {
+    position: absolute;
+    left: 0; right: 0;
+    top: 35%;
+    height: 14px;
+    background: linear-gradient(180deg, #6a1a1a, #aa3a3a, #6a1a1a);
+    z-index: 1;
+  }
+
+  .parcel-item-view {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    animation: letterSlideIn 0.5s ease;
+    max-width: min(400px, 90vw);
+    width: 100%;
+  }
+
+  .parcel-item-view.active { display: flex; }
+
+  .parcel-item-img {
+    max-width: 100%;
+    max-height: 300px;
+    object-fit: contain;
+    border-radius: 4px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+  }
+
+  .parcel-description-box {
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1rem 1.2rem;
+    font-style: italic;
+    color: var(--text-primary);
+    text-align: center;
+    width: 100%;
+    font-size: 1rem;
+    line-height: 1.5;
+  }
+
+  /* ── PLAYER NOTES ── */
+  .player-notes-section {
+    max-width: min(500px, 90vw);
+    width: 100%;
+    background: rgba(10,10,15,0.6);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1rem;
+  }
+
+  .player-notes-label {
+    font-family: 'Cinzel', serif;
+    font-size: 0.65rem;
+    color: var(--gold-dim);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+  }
+
+  .player-notes-input {
+    width: 100%;
+    background: var(--bg-mid);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text-primary);
+    font-family: 'Crimson Text', serif;
+    font-size: 1rem;
+    padding: 0.6rem 0.8rem;
+    resize: vertical;
+    min-height: 80px;
+    outline: none;
+    transition: border-color var(--transition);
+  }
+
+  .player-notes-input:focus { border-color: var(--gold); }
+
+  .overlay-actions {
+    display: flex;
+    gap: 0.8rem;
+    flex-wrap: wrap;
+    justify-content: center;
+    padding: 1rem;
+    flex-shrink: 0;
+  }
+
+  /* ── AMBIENT PARTICLES ── */
+  .particle {
+    position: absolute;
+    pointer-events: none;
+    border-radius: 50%;
+    animation: particleFall linear infinite;
+  }
+
+  @keyframes particleFall {
+    0% { transform: translateY(-20px) rotate(0deg); opacity: 1; }
+    100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+  }
+
+  @keyframes particleFloat {
+    0% { transform: translateY(110vh) rotate(0deg); opacity: 0; }
+    10% { opacity: 1; }
+    90% { opacity: 1; }
+    100% { transform: translateY(-20px) rotate(360deg); opacity: 0; }
+  }
+
+  @keyframes particleDrift {
+    0% { transform: translateX(0) translateY(0) rotate(0deg); opacity: 0; }
+    10% { opacity: 0.7; }
+    90% { opacity: 0.7; }
+    100% { transform: translateX(var(--drift-x, 30px)) translateY(-80px) rotate(180deg); opacity: 0; }
+  }
+
+  /* ── COMPOSE / SEND FORM ── */
+  .compose-form {
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.2rem;
+  }
+
+  .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+  }
+
+  @media (max-width: 600px) { .form-row { grid-template-columns: 1fr; } }
+
+  .form-group { display: flex; flex-direction: column; gap: 0.3rem; }
+
+  .form-group label {
+    font-family: 'Cinzel', serif;
+    font-size: 0.65rem;
+    color: var(--gold-dim);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+  }
+
+  .form-group input,
+  .form-group select,
+  .form-group textarea {
+    background: var(--bg-mid);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text-primary);
+    font-family: 'Crimson Text', serif;
+    font-size: 1rem;
+    padding: 0.6rem 0.8rem;
+    outline: none;
+    transition: border-color var(--transition);
+    width: 100%;
+  }
+
+  .form-group input:focus,
+  .form-group select:focus,
+  .form-group textarea:focus { border-color: var(--gold); }
+
+  .form-group select option { background: var(--bg-surface); }
+
+  .form-group textarea { resize: vertical; min-height: 80px; }
+
+  /* ── RGB SLIDERS ── */
+  .rgb-row {
+    display: flex;
+    gap: 0.8rem;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .rgb-channel { display: flex; flex-direction: column; gap: 0.2rem; flex: 1; min-width: 80px; }
+
+  .rgb-channel label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--text-secondary);
+  }
+
+  .rgb-channel input[type="range"] {
+    width: 100%;
+    padding: 0;
+    height: 4px;
+    border: none;
+    accent-color: var(--gold);
+    background: var(--bg-raised);
+    cursor: pointer;
+  }
+
+  .seal-preview-circle {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
+    border: 2px solid var(--border);
+    background: var(--bg-raised);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+  }
+
+  /* ── SEALS LIBRARY ── */
+  .seals-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+  }
+
+  .seal-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.4rem;
+    cursor: pointer;
+    padding: 0.8rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--bg-surface);
+    transition: all var(--transition);
+  }
+
+  .seal-item:hover { border-color: var(--gold); background: var(--bg-raised); }
+  .seal-item.selected { border-color: var(--gold); box-shadow: 0 0 0 2px var(--gold-dim); }
+
+  .seal-item img {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 1px solid var(--border);
+  }
+
+  .seal-item-name {
+    font-size: 0.7rem;
+    color: var(--text-secondary);
+    text-align: center;
+    font-family: 'Cinzel', serif;
+    letter-spacing: 0.05em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 90px;
+  }
+
+  /* ── OUTGOING TRACKER ── */
+  .outgoing-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+  }
+
+  .outgoing-table th {
+    font-family: 'Cinzel', serif;
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+    color: var(--gold-dim);
+    text-transform: uppercase;
+    padding: 0.6rem 0.8rem;
+    border-bottom: 1px solid var(--border);
+    text-align: left;
+    white-space: nowrap;
+  }
+
+  .outgoing-table td {
+    padding: 0.7rem 0.8rem;
+    border-bottom: 1px solid rgba(201,168,76,0.07);
+    color: var(--text-primary);
+    vertical-align: top;
+  }
+
+  .outgoing-table tr:hover td { background: var(--bg-raised); }
+
+  /* ── TEST BUTTONS (DM) ── */
+  .dm-test-bar {
+    display: flex;
+    gap: 0.8rem;
+    padding: 1rem 1.5rem;
+    background: rgba(42,122,122,0.1);
+    border-bottom: 1px solid rgba(42,122,122,0.3);
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .dm-test-label {
+    font-family: 'Cinzel', serif;
+    font-size: 0.65rem;
+    color: var(--teal-light);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+  }
+
+  /* ── ARCHIVE ── */
+  .archive-filters {
+    display: flex;
+    gap: 0.8rem;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .filter-pill {
+    font-family: 'Cinzel', serif;
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+    padding: 0.3rem 0.8rem;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    background: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all var(--transition);
+    text-transform: uppercase;
+  }
+
+  .filter-pill:hover, .filter-pill.active { border-color: var(--gold); color: var(--gold); }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 480px) {
+    .tab-btn { padding: 0.7rem 0.8rem; font-size: 0.6rem; }
+    .tab-content { padding: 1rem; }
+    .compose-form { padding: 1rem; }
+  }
+
+  /* ── UTILITY ── */
+  .hidden { display: none !important; }
+  .mt-1 { margin-top: 0.5rem; }
+  .mt-2 { margin-top: 1rem; }
+  .flex-center { display: flex; align-items: center; justify-content: center; }
+  .gap-1 { gap: 0.5rem; }
+  .text-sm { font-size: 0.85rem; }
+  .text-dim { color: var(--text-secondary); }
+  .divider { border: none; border-top: 1px solid var(--border); margin: 1.2rem 0; }
+
+  .spinner {
+    display: inline-block;
+    width: 16px; height: 16px;
+    border: 2px solid var(--border);
+    border-top-color: var(--gold);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .toast {
+    position: fixed;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: var(--bg-raised);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 0.8rem 1.5rem;
+    font-family: 'Cinzel', serif;
+    font-size: 0.8rem;
+    color: var(--gold);
+    letter-spacing: 0.1em;
+    z-index: 9999;
+    transition: transform 0.4s cubic-bezier(0.4,0,0.2,1);
+    pointer-events: none;
+  }
+
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* ── PAGE FLIP ANIMATION ── */
+  .page-flip-enter { animation: pageFlipIn 0.4s ease; }
+
+  @keyframes pageFlipIn {
+    from { opacity: 0; transform: rotateY(-20deg) translateX(-20px); }
+    to { opacity: 1; transform: rotateY(0) translateX(0); }
+  }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════
+     LOGIN SCREEN
+══════════════════════════════════════════ -->
+<div id="login-screen">
+  <div class="login-snail">🐌</div>
+  <div class="login-title">Caelos Snail Mail Service</div>
+  <div class="login-subtitle">Slow. Reliable. Occasionally magical.</div>
+  <div class="login-box">
+    <label for="login-user">Username</label>
+    <input type="text" id="login-user" autocomplete="username" placeholder="your username">
+    <label for="login-pass">Password</label>
+    <input type="password" id="login-pass" autocomplete="current-password" placeholder="••••••••">
+    <button class="btn btn-full" onclick="doLogin()">Enter the Post</button>
+    <div class="login-error" id="login-error">Invalid credentials. Try again.</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     MAIN APP
+══════════════════════════════════════════ -->
+<div id="app" style="display:none; flex-direction:column; min-height:100vh;">
+
+  <!-- DM Test Bar -->
+  <div class="dm-test-bar hidden" id="dm-test-bar">
+    <span class="dm-test-label">⚒ DM Preview</span>
+    <button class="btn btn-sm" style="background:linear-gradient(135deg,var(--teal),var(--teal-light));color:var(--bg-deep);" onclick="sendTest('letter')">Test Letter</button>
+    <button class="btn btn-sm" style="background:linear-gradient(135deg,#6a3a1a,#c87a3a);color:var(--parchment);" onclick="sendTest('parcel')">Test Parcel</button>
+  </div>
+
+  <!-- Header -->
+  <div class="app-header">
+    <div class="header-brand">
+      <span style="font-size:1.5rem;">🐌</span>
+      <span class="header-brand-text">Snail Mail</span>
+    </div>
+    <div class="header-user" id="header-user"></div>
+    <div class="header-actions">
+      <div class="notif-wrapper" onclick="switchTab('inbox')" id="notif-wrapper" style="display:none;">
+        <div class="notif-icon" id="notif-icon">
+          <span id="notif-envelope">📬</span>
+          <div class="notif-badge hidden" id="notif-badge">0</div>
+        </div>
+        <span class="notif-text" id="notif-text" style="display:none;">You've got snail</span>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="doLogout()">Leave</button>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="app-tabs" id="app-tabs">
+    <button class="tab-btn active" onclick="switchTab('inbox')" data-tab="inbox">📬 Inbox</button>
+    <button class="tab-btn" onclick="switchTab('archive')" data-tab="archive">📜 Archive</button>
+    <button class="tab-btn dm-only hidden" onclick="switchTab('compose')" data-tab="compose">✍ Compose</button>
+    <button class="tab-btn dm-only hidden" onclick="switchTab('outgoing')" data-tab="outgoing">📤 Outgoing</button>
+    <button class="tab-btn dm-only hidden" onclick="switchTab('seals')" data-tab="seals">🔴 Seals</button>
+  </div>
+
+  <!-- ── INBOX TAB ── -->
+  <div class="tab-content active" id="tab-inbox">
+    <div class="inbox-header">
+      <div class="section-title">Incoming Mail</div>
+      <button class="btn btn-ghost btn-sm" onclick="loadInbox()">↻ Refresh</button>
+    </div>
+    <div class="letter-list" id="inbox-list">
+      <div class="empty-state"><div class="empty-icon">🐌</div>The snail is on its way...</div>
+    </div>
+  </div>
+
+  <!-- ── ARCHIVE TAB ── -->
+  <div class="tab-content" id="tab-archive">
+    <div class="inbox-header">
+      <div class="section-title">Archive</div>
+    </div>
+    <div class="archive-filters">
+      <button class="filter-pill active" onclick="filterArchive('all', this)">All</button>
+      <button class="filter-pill" onclick="filterArchive('letter', this)">Letters</button>
+      <button class="filter-pill" onclick="filterArchive('parcel', this)">Parcels</button>
+    </div>
+    <div class="letter-list" id="archive-list">
+      <div class="empty-state"><div class="empty-icon">📜</div>No archived mail yet.</div>
+    </div>
+  </div>
+
+  <!-- ── COMPOSE TAB (DM) ── -->
+  <div class="tab-content" id="tab-compose">
+    <div class="section-title" style="margin-bottom:1.2rem;">Send a Letter or Parcel</div>
+    <div class="compose-form">
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Delivery Type</label>
+          <select id="c-type" onchange="toggleParcelFields()">
+            <option value="letter">Letter</option>
+            <option value="parcel">Parcel</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Recipient</label>
+          <select id="c-recipient-type" onchange="toggleRecipientType()">
+            <option value="player">Specific Player</option>
+            <option value="party">Whole Party</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group" id="c-player-group">
+          <label>Player Username</label>
+          <select id="c-recipient-username"></select>
+        </div>
+        <div class="form-group hidden" id="c-party-group">
+          <label>Party</label>
+          <select id="c-recipient-party">
+            <option value="PA">PA — Heroes of Hayward</option>
+            <option value="PB">PB — Starfall Society</option>
+            <option value="both">Both Parties</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Sender Name</label>
+          <input type="text" id="c-sender" placeholder="e.g. Havril Dunmore">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Return Address</label>
+          <input type="text" id="c-return" placeholder="e.g. The Forge, Lethbridge">
+        </div>
+        <div class="form-group">
+          <label>Label / Subject</label>
+          <input type="text" id="c-label" placeholder="e.g. Urgent. Personal.">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Caelos Date</label>
+          <input type="text" id="c-caelos-date" placeholder="e.g. 8th of Kindred, 1219 I.D.">
+        </div>
+        <div class="form-group">
+          <label>IRL Date (optional)</label>
+          <input type="text" id="c-irl-date" placeholder="e.g. Aug 10, 2026">
+        </div>
+      </div>
+
+      <!-- Seal Selection -->
+      <div class="form-group">
+        <label>Wax Seal</label>
+        <div style="display:flex; gap:1rem; align-items:flex-start; flex-wrap:wrap;">
+          <div>
+            <select id="c-seal-select" style="min-width:160px;" onchange="updateSealPreview()">
+              <option value="">-- No Seal --</option>
+            </select>
+            <div class="mt-1">
+              <div class="rgb-row">
+                <div class="rgb-channel">
+                  <label>R <span id="r-val">255</span></label>
+                  <input type="range" id="seal-r" min="0" max="255" value="255" oninput="updateSealPreview()">
+                </div>
+                <div class="rgb-channel">
+                  <label>G <span id="g-val">255</span></label>
+                  <input type="range" id="seal-g" min="0" max="255" value="255" oninput="updateSealPreview()">
+                </div>
+                <div class="rgb-channel">
+                  <label>B <span id="b-val">255</span></label>
+                  <input type="range" id="seal-b" min="0" max="255" value="255" oninput="updateSealPreview()">
+                </div>
+              </div>
+            </div>
+          </div>
+          <div id="seal-preview-box" class="seal-preview-circle">🔴</div>
+        </div>
+      </div>
+
+      <!-- Ambient Effect -->
+      <div class="form-group">
+        <label>Ambient Effect</label>
+        <select id="c-ambient">
+          <option value="generic">Generic — Soft gray motes</option>
+          <option value="cinders">Cinders — Burning sparks</option>
+          <option value="petals">Petals — Drifting rose petals</option>
+          <option value="dust">Dust — Settling dust</option>
+          <option value="rain">Rain — Falling rain</option>
+          <option value="snow">Snow — Drifting snowflakes</option>
+          <option value="fireflies">Fireflies — Glowing fireflies</option>
+          <option value="smoke">Smoke — Curling smoke</option>
+          <option value="blood">Blood — Falling drops</option>
+          <option value="dire">Dire — Dark dread clouds</option>
+          <option value="magic">Magic — Arcane sparkles</option>
+        </select>
+      </div>
+
+      <!-- Letter Pages (image URLs) -->
+      <div id="letter-pages-section">
+        <div class="form-group">
+          <label>Letter Page Image URLs</label>
+          <div id="page-url-list" style="display:flex;flex-direction:column;gap:0.5rem;"></div>
+          <button class="btn btn-ghost btn-sm mt-1" onclick="addPageUrl()">+ Add Page</button>
+        </div>
+      </div>
+
+      <!-- Parcel Fields -->
+      <div id="parcel-section" class="hidden">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Parcel Item Image URL</label>
+            <input type="text" id="c-parcel-img" placeholder="https://...">
+          </div>
+          <div class="form-group">
+            <label>Item Description</label>
+            <textarea id="c-parcel-desc" placeholder="What the item appears to be..."></textarea>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:0.8rem;flex-wrap:wrap;">
+        <button class="btn" onclick="submitLetter()">Send via Snail</button>
+        <button class="btn btn-ghost" onclick="resetCompose()">Clear</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── OUTGOING TRACKER TAB (DM) ── -->
+  <div class="tab-content" id="tab-outgoing">
+    <div class="inbox-header">
+      <div class="section-title">Outgoing Mail Tracker</div>
+      <button class="btn btn-sm" onclick="showAddOutgoing()">+ Log Entry</button>
+    </div>
+
+    <div id="add-outgoing-form" class="compose-form hidden mt-2" style="margin-bottom:1.5rem;">
+      <div class="form-row">
+        <div class="form-group">
+          <label>Sending Character</label>
+          <input type="text" id="o-sender" placeholder="e.g. Anauk">
+        </div>
+        <div class="form-group">
+          <label>Recipient</label>
+          <input type="text" id="o-recipient" placeholder="e.g. Winston Mercer">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Caelos Date</label>
+          <input type="text" id="o-caelos-date" placeholder="e.g. 8th of Kindred">
+        </div>
+        <div class="form-group">
+          <label>IRL Date (optional)</label>
+          <input type="text" id="o-irl-date">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Content Summary</label>
+        <textarea id="o-content" placeholder="What was in the letter..."></textarea>
+      </div>
+      <div class="form-group">
+        <label>Parcels Included</label>
+        <input type="text" id="o-parcels" placeholder="e.g. None / Small sealed vial">
+      </div>
+      <div style="display:flex;gap:0.8rem;">
+        <button class="btn" onclick="submitOutgoing()">Log It</button>
+        <button class="btn btn-ghost" onclick="hideAddOutgoing()">Cancel</button>
+      </div>
+    </div>
+
+    <div style="overflow-x:auto;">
+      <table class="outgoing-table" id="outgoing-table">
+        <thead>
+          <tr>
+            <th>From</th>
+            <th>To</th>
+            <th>Caelos Date</th>
+            <th>IRL Date</th>
+            <th>Contents</th>
+            <th>Parcels</th>
+          </tr>
+        </thead>
+        <tbody id="outgoing-body">
+          <tr><td colspan="6" style="color:var(--text-secondary);font-style:italic;text-align:center;">No outgoing mail logged yet.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ── SEALS TAB (DM) ── -->
+  <div class="tab-content" id="tab-seals">
+    <div class="inbox-header">
+      <div class="section-title">Seal Library</div>
+    </div>
+    <div class="compose-form" style="margin-bottom:1.5rem;">
+      <div class="form-row">
+        <div class="form-group">
+          <label>Seal Name</label>
+          <input type="text" id="new-seal-name" placeholder="e.g. Lantash Presidential">
+        </div>
+        <div class="form-group">
+          <label>Image URL (from GitHub assets/seals/)</label>
+          <input type="text" id="new-seal-url" placeholder="https://vorpallancemusic.github.io/caelos-snail-mail-service/assets/seals/lantash.png">
+        </div>
+      </div>
+      <button class="btn btn-sm" onclick="addSeal()">Add Seal</button>
+    </div>
+    <div class="seals-grid" id="seals-grid">
+      <div class="empty-state" style="grid-column:1/-1;"><div class="empty-icon">🔴</div>No seals uploaded yet.</div>
+    </div>
+  </div>
+
+</div><!-- /app -->
+
+<!-- ══════════════════════════════════════════
+     LETTER VIEWER OVERLAY
+══════════════════════════════════════════ -->
+<div id="letter-overlay">
+  <div class="overlay-ambient" id="overlay-ambient"></div>
+  <div class="overlay-content">
+
+    <div class="overlay-header">
+      <div class="overlay-meta">
+        <div class="overlay-sender" id="ov-sender"></div>
+        <div class="overlay-return" id="ov-return"></div>
+        <div class="overlay-date" id="ov-date"></div>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="closeOverlay()">✕ Close</button>
+    </div>
+
+    <!-- Envelope Stage -->
+    <div id="envelope-stage">
+      <div class="envelope-wrapper" onclick="openEnvelope()" id="envelope-wrapper">
+        <div class="envelope-body" id="envelope-body">
+          <div class="envelope-flap" id="envelope-flap"></div>
+          <div class="envelope-lines">
+            <div class="envelope-line"></div>
+            <div class="envelope-line"></div>
+            <div class="envelope-line"></div>
+          </div>
+          <div class="seal-wrapper" id="seal-wrapper">
+            <img src="" alt="seal" class="seal-img seal-shimmer" id="seal-img" style="display:none;">
+            <div id="seal-placeholder" style="font-size:2rem;">🔴</div>
+          </div>
+        </div>
+      </div>
+      <div class="envelope-hint">Click the seal to open</div>
+    </div>
+
+    <!-- Parcel Stage -->
+    <div id="parcel-stage">
+      <div class="parcel-box-wrapper" onclick="openParcel()" id="parcel-wrapper">
+        <div class="parcel-box">
+          <div class="parcel-lid" id="parcel-lid"></div>
+          <div class="parcel-ribbon-h"></div>
+          <div class="parcel-ribbon-v"></div>
+        </div>
+      </div>
+      <div class="envelope-hint">Click to open</div>
+      <div class="parcel-item-view" id="parcel-item-view">
+        <img src="" alt="item" class="parcel-item-img" id="parcel-item-img">
+        <div class="parcel-description-box" id="parcel-desc-box"></div>
+      </div>
+    </div>
+
+    <!-- Letter Reading -->
+    <div id="letter-reading">
+      <div class="letter-image-container" id="letter-img-container" onclick="toggleZoom()">
+        <img src="" alt="letter" id="letter-img">
+      </div>
+      <div class="page-controls" id="page-controls" style="display:none;">
+        <button class="btn btn-ghost btn-sm" onclick="prevPage()">← Prev</button>
+        <span class="page-indicator" id="page-indicator">1 / 1</span>
+        <button class="btn btn-ghost btn-sm" onclick="nextPage()">Next →</button>
+      </div>
+      <div class="player-notes-section">
+        <div class="player-notes-label">📝 Your Notes</div>
+        <textarea class="player-notes-input" id="player-note-input" placeholder="Add your own notes about this letter..."></textarea>
+        <button class="btn btn-ghost btn-sm mt-1" onclick="saveNote()">Save Note</button>
+      </div>
+    </div>
+
+    <!-- Overlay Actions -->
+    <div class="overlay-actions" id="overlay-actions" style="display:none;">
+      <button class="btn btn-ghost btn-sm" onclick="archiveLetter()">📜 Archive</button>
+    </div>
+
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- ══════════════════════════════════════════
+     JAVASCRIPT
+══════════════════════════════════════════ -->
+<script>
+const API = 'https://script.google.com/macros/s/AKfycbzyrvxAz0RYRKBxu_a6QSCVpBbc77swj1UMhbXF-g9W1uUGEGBNmjZRpkpiFz4Q7dN_/exec';
+const GITHUB_BASE = 'https://vorpallancemusic.github.io/caelos-snail-mail-service';
+
+let currentUser = null;
+let allLetters = [];
+let currentLetter = null;
+let currentPages = [];
+let currentPageIndex = 0;
+let ambientInterval = null;
+let notifInterval = null;
+let sealsList = [];
+let pageUrlCount = 0;
+
+// ── API CALL ──
+async function api(action, body = {}) {
+  try {
+    const res = await fetch(API, {
+      method: 'POST',
+      body: JSON.stringify({ action, ...body })
+    });
+    return await res.json();
+  } catch(e) {
+    console.error('API error:', e);
+    return { success: false, error: e.message };
+  }
+}
+
+// ── TOAST ──
+function toast(msg, duration = 2500) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), duration);
+}
+
+// ── LOGIN ──
+async function doLogin() {
+  const user = document.getElementById('login-user').value.trim();
+  const pass = document.getElementById('login-pass').value;
+  if (!user || !pass) return;
+
+  const res = await api('login', { username: user, password: pass });
+  if (!res.success) {
+    document.getElementById('login-error').style.display = 'block';
+    return;
+  }
+
+  currentUser = res.user;
+  document.getElementById('login-screen').style.display = 'none';
+  const appEl = document.getElementById('app');
+  appEl.style.display = 'flex';
+
+  document.getElementById('header-user').textContent = res.user.display_name;
+
+  if (res.user.role === 'dm') {
+    document.querySelectorAll('.dm-only').forEach(el => el.classList.remove('hidden'));
+    document.getElementById('dm-test-bar').classList.remove('hidden');
+    populatePlayerSelect();
+  }
+
+  loadInbox();
+  loadSeals();
+  startNotifPoll();
+}
+
+document.getElementById('login-pass').addEventListener('keydown', e => {
+  if (e.key === 'Enter') doLogin();
+});
+
+function doLogout() {
+  currentUser = null;
+  clearInterval(notifInterval);
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('login-user').value = '';
+  document.getElementById('login-pass').value = '';
+}
+
+// ── TABS ──
+function switchTab(name) {
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  document.querySelector(`[data-tab="${name}"]`).classList.add('active');
+
+  if (name === 'inbox') loadInbox();
+  if (name === 'archive') loadArchive();
+  if (name === 'outgoing') loadOutgoing();
+  if (name === 'seals') loadSeals();
+  if (name === 'compose') { addPageUrl(); loadSealsForCompose(); }
+}
+
+// ── NOTIFICATIONS ──
+function startNotifPoll() {
+  checkNotifs();
+  notifInterval = setInterval(checkNotifs, 30000);
+}
+
+async function checkNotifs() {
+  const res = await api('getUnreadCount', {
+    username: currentUser.username,
+    party: currentUser.party,
+    role: currentUser.role
+  });
+  if (!res.success) return;
+
+  const count = res.count;
+  const wrapper = document.getElementById('notif-wrapper');
+  const badge = document.getElementById('notif-badge');
+  const icon = document.getElementById('notif-icon');
+  const text = document.getElementById('notif-text');
+
+  wrapper.style.display = 'flex';
+
+  if (count > 0) {
+    badge.textContent = count;
+    badge.classList.remove('hidden');
+    icon.classList.add('shaking');
+    text.style.display = 'inline';
+  } else {
+    badge.classList.add('hidden');
+    icon.classList.remove('shaking');
+    text.style.display = 'none';
+  }
+}
+
+// ── INBOX ──
+async function loadInbox() {
+  const res = await api('getLetters', {
+    username: currentUser.username,
+    party: currentUser.party,
+    role: currentUser.role
+  });
+  if (!res.success) return;
+
+  allLetters = res.letters;
+  const unread = allLetters.filter(l => l.status === 'unread');
+  const read = allLetters.filter(l => l.status === 'read');
+  const inbox = [...unread, ...read];
+
+  renderLetterList('inbox-list', inbox);
+}
+
+function renderLetterList(containerId, letters) {
+  const el = document.getElementById(containerId);
+  if (!letters.length) {
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon">🐌</div>Nothing here yet.</div>';
+    return;
+  }
+
+  el.innerHTML = letters.map(l => {
+    const isUnread = l.status === 'unread';
+    const sealHtml = l.seal_image_url
+      ? `<img src="${l.seal_image_url}" class="letter-card-seal" alt="seal">`
+      : `<div class="letter-card-seal-placeholder">${l.type === 'parcel' ? '📦' : '✉️'}</div>`;
+    const typeIcon = l.type === 'parcel' ? '📦' : '✉️';
+    const dateStr = l.caelos_date || l.irl_date || '';
+
+    return `
+      <div class="letter-card ${isUnread ? 'unread' : ''}" onclick="openLetter('${l.id}')">
+        ${sealHtml}
+        <div class="letter-card-info">
+          <div class="letter-card-sender">${l.sender_name || 'Unknown Sender'}</div>
+          <div class="letter-card-label">${l.label || l.return_address || ''}</div>
+          <div class="letter-card-date">${dateStr}</div>
+        </div>
+        <div class="letter-card-type">${typeIcon}</div>
+      </div>`;
+  }).join('');
+}
+
+// ── ARCHIVE ──
+let archiveFilter = 'all';
+
+async function loadArchive() {
+  const res = await api('getLetters', {
+    username: currentUser.username,
+    party: currentUser.party,
+    role: currentUser.role
+  });
+  if (!res.success) return;
+  allLetters = res.letters;
+  renderArchive();
+}
+
+function renderArchive() {
+  const archived = allLetters.filter(l => {
+    if (l.status !== 'archived') return false;
+    if (archiveFilter === 'all') return true;
+    return l.type === archiveFilter;
+  });
+  renderLetterList('archive-list', archived);
+}
+
+function filterArchive(type, btn) {
+  archiveFilter = type;
+  document.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  renderArchive();
+}
+
+// ── OPEN LETTER ──
+async function openLetter(id) {
+  const letter = allLetters.find(l => l.id === id) || (await api('getLetter', { letter_id: id })).letter;
+  if (!letter) return;
+  currentLetter = letter;
+
+  // Mark read
+  if (letter.status === 'unread') {
+    await api('markRead', { letter_id: id });
+    letter.status = 'read';
+    checkNotifs();
+  }
+
+  // Populate header
+  document.getElementById('ov-sender').textContent = letter.sender_name || 'Unknown Sender';
+  document.getElementById('ov-return').textContent = letter.return_address || '';
+  const dateStr = [letter.caelos_date, letter.irl_date].filter(Boolean).join(' · ');
+  document.getElementById('ov-date').textContent = dateStr;
+
+  // Reset stages
+  document.getElementById('envelope-stage').style.display = 'none';
+  document.getElementById('parcel-stage').style.display = 'none';
+  document.getElementById('letter-reading').classList.remove('active');
+  document.getElementById('parcel-item-view').classList.remove('active');
+  document.getElementById('parcel-lid').classList.remove('open');
+  document.getElementById('envelope-flap').classList.remove('open');
+  document.getElementById('seal-img').classList.add('seal-shimmer');
+  document.getElementById('seal-img').classList.remove('seal-crack');
+  document.getElementById('overlay-actions').style.display = 'none';
+
+  // Seal
+  const sealImg = document.getElementById('seal-img');
+  const sealPH = document.getElementById('seal-placeholder');
+  if (letter.seal_image_url) {
+    sealImg.src = applyTint(letter.seal_image_url, letter.seal_tint_r, letter.seal_tint_g, letter.seal_tint_b);
+    sealImg.style.display = 'block';
+    sealPH.style.display = 'none';
+  } else {
+    sealImg.style.display = 'none';
+    sealPH.style.display = 'block';
+  }
+
+  // Show correct stage
+  if (letter.type === 'parcel') {
+    document.getElementById('parcel-stage').style.display = 'flex';
+    document.getElementById('parcel-item-img').src = letter.parcel_image_url || '';
+    document.getElementById('parcel-desc-box').textContent = letter.parcel_description || '';
+  } else {
+    document.getElementById('envelope-stage').style.display = 'flex';
+    // Pages
+    try {
+      currentPages = JSON.parse(letter.pages_json || '[]');
+    } catch(e) { currentPages = []; }
+    currentPageIndex = 0;
+  }
+
+  // Ambient
+  startAmbient(letter.ambient_effect || 'generic');
+
+  // Load player note
+  loadNote(id);
+
+  // Show overlay
+  document.getElementById('letter-overlay').classList.add('active');
+}
+
+// ── ENVELOPE OPEN ──
+function openEnvelope() {
+  const flap = document.getElementById('envelope-flap');
+  const seal = document.getElementById('seal-img');
+  const sealPH = document.getElementById('seal-placeholder');
+
+  // Crack animation
+  if (seal.style.display !== 'none') {
+    seal.classList.remove('seal-shimmer');
+    seal.classList.add('seal-crack');
+  } else {
+    sealPH.style.animation = 'sealCrack 0.4s ease-out forwards';
+  }
+
+  setTimeout(() => {
+    flap.classList.add('open');
+  }, 300);
+
+  setTimeout(() => {
+    document.getElementById('envelope-stage').style.display = 'none';
+    showLetterReading();
+  }, 900);
+}
+
+function showLetterReading() {
+  const reading = document.getElementById('letter-reading');
+  reading.classList.add('active');
+  document.getElementById('overlay-actions').style.display = 'flex';
+
+  if (currentPages.length > 0) {
+    showPage(0);
+  } else {
+    document.getElementById('letter-img').src = '';
+    document.getElementById('letter-img-container').style.display = 'none';
+    document.getElementById('page-controls').style.display = 'none';
+  }
+}
+
+function showPage(index) {
+  currentPageIndex = index;
+  const img = document.getElementById('letter-img');
+  const container = document.getElementById('letter-img-container');
+  const controls = document.getElementById('page-controls');
+
+  img.src = currentPages[index];
+  container.style.display = 'block';
+  img.classList.remove('page-flip-enter');
+  void img.offsetWidth;
+  img.classList.add('page-flip-enter');
+
+  if (currentPages.length > 1) {
+    controls.style.display = 'flex';
+    document.getElementById('page-indicator').textContent = `${index + 1} / ${currentPages.length}`;
+  } else {
+    controls.style.display = 'none';
+  }
+}
+
+function prevPage() {
+  if (currentPageIndex > 0) showPage(currentPageIndex - 1);
+}
+
+function nextPage() {
+  if (currentPageIndex < currentPages.length - 1) showPage(currentPageIndex + 1);
+}
+
+function toggleZoom() {
+  document.getElementById('letter-img-container').classList.toggle('zoomed');
+}
+
+// ── PARCEL OPEN ──
+function openParcel() {
+  const lid = document.getElementById('parcel-lid');
+  lid.classList.add('open');
+  setTimeout(() => {
+    document.getElementById('parcel-wrapper').style.display = 'none';
+    document.querySelector('#parcel-stage .envelope-hint').style.display = 'none';
+    document.getElementById('parcel-item-view').classList.add('active');
+    document.getElementById('overlay-actions').style.display = 'flex';
+  }, 700);
+}
+
+// ── OVERLAY CLOSE ──
+function closeOverlay() {
+  document.getElementById('letter-overlay').classList.remove('active');
+  stopAmbient();
+  loadInbox();
+}
+
+async function archiveLetter() {
+  if (!currentLetter) return;
+  await api('archiveLetter', { letter_id: currentLetter.id });
+  toast('Archived.');
+  closeOverlay();
+}
+
+// ── PLAYER NOTES ──
+async function loadNote(letterId) {
+  const res = await api('getNote', { letter_id: letterId, username: currentUser.username });
+  document.getElementById('player-note-input').value = res.note ? res.note.note_text : '';
+}
+
+async function saveNote() {
+  const text = document.getElementById('player-note-input').value;
+  await api('saveNote', {
+    letter_id: currentLetter.id,
+    username: currentUser.username,
+    note_text: text
+  });
+  toast('Note saved.');
+}
+
+// ── AMBIENT ──
+function startAmbient(effect) {
+  stopAmbient();
+  const container = document.getElementById('overlay-ambient');
+  container.innerHTML = '';
+
+  const configs = {
+    generic:   { count: 25, create: () => createMote('#aaaaaa', 3, 4, 8, 15) },
+    cinders:   { count: 40, create: () => createCinder() },
+    petals:    { count: 20, create: () => createPetal() },
+    dust:      { count: 30, create: () => createMote('#c8b48a', 2, 3, 6, 12) },
+    rain:      { count: 60, create: () => createRain() },
+    snow:      { count: 35, create: () => createSnow() },
+    fireflies: { count: 20, create: () => createFirefly() },
+    smoke:     { count: 15, create: () => createSmoke() },
+    blood:     { count: 20, create: () => createBlood() },
+    dire:      { count: 12, create: () => createDire() },
+    magic:     { count: 35, create: () => createMagic() },
+  };
+
+  const cfg = configs[effect] || configs.generic;
+
+  for (let i = 0; i < cfg.count; i++) {
+    setTimeout(() => {
+      const p = cfg.create();
+      container.appendChild(p);
+    }, Math.random() * 3000);
+  }
+
+  ambientInterval = setInterval(() => {
+    const p = cfg.create();
+    container.appendChild(p);
+    setTimeout(() => p.remove(), 12000);
+  }, 400);
+}
+
+function stopAmbient() {
+  clearInterval(ambientInterval);
+  document.getElementById('overlay-ambient').innerHTML = '';
+}
+
+function rnd(min, max) { return Math.random() * (max - min) + min; }
+
+function createMote(color, minSize, maxSize, minDur, maxDur) {
+  const p = document.createElement('div');
+  const size = rnd(minSize, maxSize);
+  p.style.cssText = `
+    position:absolute;
+    width:${size}px; height:${size}px;
+    background:${color};
+    border-radius:50%;
+    left:${rnd(0,100)}%;
+    top:${rnd(0,100)}%;
+    opacity:0;
+    animation: particleDrift ${rnd(minDur,maxDur)}s ${rnd(0,3)}s ease-in-out infinite;
+    --drift-x: ${rnd(-40,40)}px;
+  `;
+  return p;
+}
+
+function createCinder() {
+  const p = document.createElement('div');
+  const size = rnd(2, 5);
+  const colors = ['#ff6a00','#ff4400','#ffaa00','#ff8800'];
+  p.style.cssText = `
+    position:absolute;
+    width:${size}px; height:${size}px;
+    background:${colors[Math.floor(Math.random()*colors.length)]};
+    border-radius:50%;
+    left:${rnd(10,90)}%;
+    top:105%;
+    box-shadow: 0 0 ${size*2}px currentColor;
+    animation: particleFall ${rnd(3,7)}s ${rnd(0,2)}s linear forwards;
+    --drift-x:${rnd(-60,60)}px;
+  `;
+  return p;
+}
+
+function createPetal() {
+  const p = document.createElement('div');
+  const size = rnd(8, 16);
+  const pinks = ['#ffb7c5','#ff8fa3','#ffc0cb','#e75480'];
+  p.style.cssText = `
+    position:absolute;
+    width:${size}px; height:${size*0.6}px;
+    background:${pinks[Math.floor(Math.random()*pinks.length)]};
+    border-radius:50% 0 50% 0;
+    left:${rnd(0,100)}%;
+    top:-20px;
+    opacity:0.85;
+    animation: particleFall ${rnd(5,10)}s ${rnd(0,4)}s ease-in-out infinite;
+  `;
+  return p;
+}
+
+function createRain() {
+  const p = document.createElement('div');
+  p.style.cssText = `
+    position:absolute;
+    width:1px; height:${rnd(10,20)}px;
+    background:rgba(150,180,255,0.6);
+    left:${rnd(0,100)}%;
+    top:-20px;
+    animation: particleFall ${rnd(0.5,1.2)}s ${rnd(0,1)}s linear infinite;
+  `;
+  return p;
+}
+
+function createSnow() {
+  const p = document.createElement('div');
+  const size = rnd(3,8);
+  p.style.cssText = `
+    position:absolute;
+    width:${size}px; height:${size}px;
+    background:rgba(220,240,255,0.9);
+    border-radius:50%;
+    left:${rnd(0,100)}%;
+    top:-10px;
+    animation: particleFall ${rnd(4,9)}s ${rnd(0,4)}s ease-in-out infinite;
+  `;
+  return p;
+}
+
+function createFirefly() {
+  const p = document.createElement('div');
+  const size = rnd(4,8);
+  p.style.cssText = `
+    position:absolute;
+    width:${size}px; height:${size}px;
+    background:#aaff66;
+    border-radius:50%;
+    left:${rnd(5,95)}%;
+    top:${rnd(10,90)}%;
+    box-shadow: 0 0 ${size*3}px #aaff66;
+    animation: particleDrift ${rnd(3,7)}s ${rnd(0,3)}s ease-in-out infinite;
+    --drift-x:${rnd(-80,80)}px;
+  `;
+  return p;
+}
+
+function createSmoke() {
+  const p = document.createElement('div');
+  const size = rnd(20,50);
+  p.style.cssText = `
+    position:absolute;
+    width:${size}px; height:${size}px;
+    background:radial-gradient(circle, rgba(160,160,160,0.3) 0%, transparent 70%);
+    border-radius:50%;
+    left:${rnd(10,90)}%;
+    bottom:${rnd(0,30)}%;
+    animation: particleFloat ${rnd(6,12)}s ${rnd(0,4)}s ease-in-out infinite;
+  `;
+  return p;
+}
+
+function createBlood() {
+  const p = document.createElement('div');
+  const size = rnd(3,7);
+  p.style.cssText = `
+    position:absolute;
+    width:${size}px; height:${size*2}px;
+    background:#8a0000;
+    border-radius:0 0 50% 50%;
+    left:${rnd(5,95)}%;
+    top:-10px;
+    box-shadow:0 0 4px #cc0000;
+    animation: particleFall ${rnd(1.5,3.5)}s ${rnd(0,2)}s ease-in forwards;
+  `;
+  return p;
+}
+
+function createDire() {
+  const p = document.createElement('div');
+  const size = rnd(40,100);
+  p.style.cssText = `
+    position:absolute;
+    width:${size}px; height:${size*0.6}px;
+    background:radial-gradient(ellipse, rgba(20,0,40,0.7) 0%, transparent 70%);
+    border-radius:50%;
+    left:${rnd(0,90)}%;
+    top:${rnd(0,80)}%;
+    animation: particleDrift ${rnd(8,16)}s ${rnd(0,5)}s ease-in-out infinite;
+    --drift-x:${rnd(-60,60)}px;
+  `;
+  return p;
+}
+
+function createMagic() {
+  const p = document.createElement('div');
+  const size = rnd(3,7);
+  const colors = ['#aa66ff','#66aaff','#ffaa66','#66ffaa','#ff66aa'];
+  p.style.cssText = `
+    position:absolute;
+    width:${size}px; height:${size}px;
+    background:${colors[Math.floor(Math.random()*colors.length)]};
+    border-radius:50%;
+    left:${rnd(5,95)}%;
+    top:${rnd(5,95)}%;
+    box-shadow:0 0 ${size*2}px currentColor;
+    animation: particleDrift ${rnd(2,5)}s ${rnd(0,2)}s ease-in-out infinite;
+    --drift-x:${rnd(-50,50)}px;
+  `;
+  return p;
+}
+
+// ── SEAL TINT (canvas trick) ──
+function applyTint(url, r, g, b) {
+  // Just return the URL for now; tinting applied via CSS filter approximation
+  return url;
+}
+
+function getSealFilter(r, g, b) {
+  // Convert RGB to CSS filter hue-rotate + saturate approximation
+  // For simplicity we use a sepia + hue-rotate combo
+  const hue = Math.atan2(b - 128, r - 128) * (180 / Math.PI);
+  const sat = Math.sqrt((r-128)**2 + (b-128)**2) / 128;
+  return `sepia(0.5) saturate(${1 + sat * 3}) hue-rotate(${hue}deg)`;
+}
+
+// ── COMPOSE ──
+function addPageUrl() {
+  pageUrlCount++;
+  const list = document.getElementById('page-url-list');
+  const div = document.createElement('div');
+  div.style.display = 'flex';
+  div.style.gap = '0.5rem';
+  div.innerHTML = `
+    <input type="text" placeholder="Page ${pageUrlCount} image URL" style="flex:1;background:var(--bg-mid);border:1px solid var(--border);border-radius:var(--radius);color:var(--text-primary);font-family:Crimson Text,serif;font-size:1rem;padding:0.5rem 0.7rem;outline:none;" class="page-url-input">
+    <button class="btn btn-ghost btn-sm" onclick="this.parentElement.remove()">✕</button>
+  `;
+  list.appendChild(div);
+}
+
+function toggleParcelFields() {
+  const type = document.getElementById('c-type').value;
+  document.getElementById('parcel-section').classList.toggle('hidden', type !== 'parcel');
+  document.getElementById('letter-pages-section').classList.toggle('hidden', type === 'parcel');
+}
+
+function toggleRecipientType() {
+  const type = document.getElementById('c-recipient-type').value;
+  document.getElementById('c-player-group').classList.toggle('hidden', type !== 'player');
+  document.getElementById('c-party-group').classList.toggle('hidden', type !== 'party');
+}
+
+async function populatePlayerSelect() {
+  const res = await api('getLetters', {
+    username: currentUser.username,
+    party: currentUser.party,
+    role: 'dm'
+  });
+  // We populate from accounts via a separate call -- for now hardcode common options
+  // In future can add getAccounts endpoint
+  const sel = document.getElementById('c-recipient-username');
+  sel.innerHTML = `
+    <option value="ryan">ryan</option>
+    <option value="kjersten">kjersten</option>
+    <option value="amber">amber</option>
+    <option value="beth">beth</option>
+    <option value="pb1">pb1</option>
+    <option value="pb2">pb2</option>
+    <option value="pb3">pb3</option>
+    <option value="dm">dm (yourself)</option>
+  `;
+}
+
+async function loadSealsForCompose() {
+  const sel = document.getElementById('c-seal-select');
+  sel.innerHTML = '<option value="">-- No Seal --</option>';
+  sealsList.forEach(s => {
+    const opt = document.createElement('option');
+    opt.value = s.image_url;
+    opt.textContent = s.name;
+    sel.appendChild(opt);
+  });
+}
+
+function updateSealPreview() {
+  const url = document.getElementById('c-seal-select').value;
+  const r = document.getElementById('seal-r').value;
+  const g = document.getElementById('seal-g').value;
+  const b = document.getElementById('seal-b').value;
+  document.getElementById('r-val').textContent = r;
+  document.getElementById('g-val').textContent = g;
+  document.getElementById('b-val').textContent = b;
+
+  const preview = document.getElementById('seal-preview-box');
+  if (url) {
+    preview.innerHTML = `<img src="${url}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;filter:${getSealFilter(+r,+g,+b)};">`;
+  } else {
+    preview.innerHTML = '🔴';
+  }
+}
+
+async function submitLetter() {
+  const type = document.getElementById('c-type').value;
+  const recipType = document.getElementById('c-recipient-type').value;
+  const pageInputs = document.querySelectorAll('.page-url-input');
+  const pages = Array.from(pageInputs).map(i => i.value.trim()).filter(Boolean);
+
+  const body = {
+    type,
+    sender_name: document.getElementById('c-sender').value,
+    return_address: document.getElementById('c-return').value,
+    label: document.getElementById('c-label').value,
+    caelos_date: document.getElementById('c-caelos-date').value,
+    irl_date: document.getElementById('c-irl-date').value,
+    recipient_username: recipType === 'player' ? document.getElementById('c-recipient-username').value : '',
+    recipient_party: recipType === 'party' ? document.getElementById('c-recipient-party').value : '',
+    seal_image_url: document.getElementById('c-seal-select').value,
+    seal_tint_r: document.getElementById('seal-r').value,
+    seal_tint_g: document.getElementById('seal-g').value,
+    seal_tint_b: document.getElementById('seal-b').value,
+    ambient_effect: document.getElementById('c-ambient').value,
+    pages_json: JSON.stringify(pages),
+    parcel_image_url: document.getElementById('c-parcel-img')?.value || '',
+    parcel_description: document.getElementById('c-parcel-desc')?.value || '',
+  };
+
+  const res = await api('sendLetter', body);
+  if (res.success) {
+    toast('Letter sent via snail. 🐌');
+    resetCompose();
+    checkNotifs();
+  } else {
+    toast('Something went wrong: ' + res.error);
+  }
+}
+
+function resetCompose() {
+  document.getElementById('c-sender').value = '';
+  document.getElementById('c-return').value = '';
+  document.getElementById('c-label').value = '';
+  document.getElementById('c-caelos-date').value = '';
+  document.getElementById('c-irl-date').value = '';
+  document.getElementById('page-url-list').innerHTML = '';
+  document.getElementById('c-parcel-img').value = '';
+  document.getElementById('c-parcel-desc').value = '';
+  pageUrlCount = 0;
+  addPageUrl();
+}
+
+// ── TEST SENDS ──
+async function sendTest(type) {
+  const res = await api(type === 'letter' ? 'testLetter' : 'testParcel', {
+    username: currentUser.username
+  });
+  if (res.success) {
+    toast(`Test ${type} sent to your inbox! 🐌`);
+    checkNotifs();
+  } else {
+    toast('Error: ' + res.error);
+  }
+}
+
+// ── OUTGOING ──
+async function loadOutgoing() {
+  const res = await api('getOutgoing', {});
+  if (!res.success) return;
+  const tbody = document.getElementById('outgoing-body');
+  if (!res.entries.length) {
+    tbody.innerHTML = '<tr><td colspan="6" style="color:var(--text-secondary);font-style:italic;text-align:center;">No outgoing mail logged yet.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = res.entries.map(e => `
+    <tr>
+      <td>${e.sender_character || ''}</td>
+      <td>${e.recipient_name || ''}</td>
+      <td style="font-family:JetBrains Mono,monospace;font-size:0.8rem;">${e.caelos_date || ''}</td>
+      <td style="font-family:JetBrains Mono,monospace;font-size:0.8rem;">${e.irl_date || ''}</td>
+      <td>${e.content_summary || ''}</td>
+      <td>${e.parcels_included || 'None'}</td>
+    </tr>
+  `).join('');
+}
+
+function showAddOutgoing() {
+  document.getElementById('add-outgoing-form').classList.remove('hidden');
+}
+
+function hideAddOutgoing() {
+  document.getElementById('add-outgoing-form').classList.add('hidden');
+}
+
+async function submitOutgoing() {
+  const body = {
+    sender_character: document.getElementById('o-sender').value,
+    recipient_name: document.getElementById('o-recipient').value,
+    caelos_date: document.getElementById('o-caelos-date').value,
+    irl_date: document.getElementById('o-irl-date').value,
+    content_summary: document.getElementById('o-content').value,
+    parcels_included: document.getElementById('o-parcels').value,
+  };
+  const res = await api('addOutgoing', body);
+  if (res.success) {
+    toast('Logged.');
+    hideAddOutgoing();
+    loadOutgoing();
+  }
+}
+
+// ── SEALS ──
+async function loadSeals() {
+  const res = await api('getSeals', {});
+  if (!res.success) return;
+  sealsList = res.seals;
+  renderSeals();
+}
+
+function renderSeals() {
+  const grid = document.getElementById('seals-grid');
+  if (!sealsList.length) {
+    grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1;"><div class="empty-icon">🔴</div>No seals uploaded yet.</div>';
+    return;
+  }
+  grid.innerHTML = sealsList.map(s => `
+    <div class="seal-item">
+      <img src="${s.image_url}" alt="${s.name}" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔴</text></svg>'">
+      <div class="seal-item-name">${s.name}</div>
+      <button class="btn btn-danger btn-sm" onclick="deleteSeal('${s.id}')">Remove</button>
+    </div>
+  `).join('');
+}
+
+async function addSeal() {
+  const name = document.getElementById('new-seal-name').value.trim();
+  const url = document.getElementById('new-seal-url').value.trim();
+  if (!name || !url) { toast('Name and URL required.'); return; }
+  const res = await api('addSeal', { name, image_url: url });
+  if (res.success) {
+    toast('Seal added.');
+    document.getElementById('new-seal-name').value = '';
+    document.getElementById('new-seal-url').value = '';
+    loadSeals();
+  }
+}
+
+async function deleteSeal(id) {
+  const res = await api('deleteSeal', { seal_id: id });
+  if (res.success) { toast('Seal removed.'); loadSeals(); }
+}
+
+// ── INIT ──
+document.addEventListener('DOMContentLoaded', () => {
+  // Auto-fill IRL date in compose
+  const irlField = document.getElementById('c-irl-date');
+  if (irlField) irlField.value = new Date().toLocaleDateString('en-US', {year:'numeric',month:'short',day:'numeric'});
+});
+</script>
+</body>
+</html>
