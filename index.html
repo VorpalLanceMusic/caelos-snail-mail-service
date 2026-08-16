@@ -221,17 +221,16 @@
   }
 
   .notif-icon.shaking {
-    animation: shake 0.5s ease-in-out infinite;
+    animation: jostle 0.6s ease-in-out;
   }
 
-  @keyframes shake {
-    0%, 100% { transform: rotate(0deg); }
-    15% { transform: rotate(-12deg); }
-    30% { transform: rotate(12deg); }
-    45% { transform: rotate(-8deg); }
-    60% { transform: rotate(8deg); }
-    75% { transform: rotate(-4deg); }
-    90% { transform: rotate(4deg); }
+  @keyframes jostle {
+    0%   { transform: translateX(0); }
+    20%  { transform: translateX(-8px); }
+    40%  { transform: translateX(8px); }
+    60%  { transform: translateX(-5px); }
+    80%  { transform: translateX(5px); }
+    100% { transform: translateX(0); }
   }
 
   .notif-badge {
@@ -1236,6 +1235,13 @@
         </div>
       </div>
 
+      <div class="form-group">
+        <label style="display:flex;align-items:center;gap:0.6rem;cursor:pointer;">
+          <input type="checkbox" id="c-archive-push" style="width:16px;height:16px;accent-color:var(--gold);cursor:pointer;">
+          <span style="font-family:'Cinzel',serif;font-size:0.7rem;color:var(--text-secondary);letter-spacing:0.1em;text-transform:uppercase;">Send silently to archive (no notification)</span>
+        </label>
+        <div style="font-size:0.8rem;color:var(--text-dim);font-style:italic;margin-top:0.3rem;padding-left:22px;">Use for backfilling history or retconning past correspondence.</div>
+      </div>
       <div style="display:flex;gap:0.8rem;flex-wrap:wrap;">
         <button class="btn" onclick="submitLetter()">Send via Snail</button>
         <button class="btn btn-ghost" onclick="resetCompose()">Clear</button>
@@ -1405,6 +1411,39 @@
   </div>
 </div>
 
+
+<!-- ══════════════════════════════════════════
+     NEW MAIL CINEMATIC
+══════════════════════════════════════════ -->
+<div id="mail-cinematic" style="display:none; position:fixed; inset:0; z-index:2000; background:rgba(0,0,0,0); pointer-events:none; flex-direction:column; align-items:center; justify-content:center;">
+  <div id="cinematic-backdrop" style="position:absolute; inset:0; background:rgba(5,0,15,0.92); opacity:0; transition:opacity 0.8s ease;"></div>
+  
+  <!-- Magic waves -->
+  <div id="cinematic-magic" style="position:absolute; inset:0; pointer-events:none; overflow:hidden; opacity:0; transition:opacity 0.5s ease;">
+  </div>
+
+  <!-- Content -->
+  <div id="cinematic-content" style="position:relative; z-index:1; display:flex; flex-direction:column; align-items:center; gap:1.5rem; opacity:0; transform:scale(0.8); transition: opacity 0.6s ease, transform 0.6s cubic-bezier(0.34,1.56,0.64,1);">
+    
+    <!-- Emoji cluster -->
+    <div style="position:relative; width:120px; height:100px; display:flex; align-items:center; justify-content:center;">
+      <span id="cinematic-delivery-emoji" style="font-size:3.5rem; position:absolute; left:30px; top:10px; z-index:1; opacity:0; transform:translateY(20px); transition: opacity 0.4s ease, transform 0.4s ease;">✉️</span>
+      <span id="cinematic-snail" style="font-size:4rem; position:absolute; left:0; top:0; z-index:2; opacity:0; transform:translateY(20px); transition: opacity 0.4s ease, transform 0.4s ease;">🐌</span>
+    </div>
+
+    <!-- Title -->
+    <div id="cinematic-title" style="font-family:'Cinzel',serif; font-size:clamp(1.4rem,4vw,2.2rem); color:var(--gold); letter-spacing:0.2em; text-align:center; opacity:0; transform:translateY(10px); transition: opacity 0.5s ease 0.1s, transform 0.5s ease 0.1s; text-shadow: 0 0 30px rgba(201,168,76,0.8);">
+      You've Got Snail
+    </div>
+
+    <!-- Buttons -->
+    <div id="cinematic-buttons" style="display:flex; gap:1rem; opacity:0; transform:translateY(10px); transition: opacity 0.5s ease 0.2s, transform 0.5s ease 0.2s; flex-wrap:wrap; justify-content:center;">
+      <button class="btn" onclick="cinematicOpenNow()" style="font-size:0.9rem; padding:0.8rem 1.8rem;">Open Now</button>
+      <button class="btn btn-ghost" onclick="cinematicOpenLater()" style="font-size:0.9rem; padding:0.8rem 1.8rem;">Open Later</button>
+    </div>
+  </div>
+</div>
+
 <!-- Toast -->
 <div class="toast" id="toast"></div>
 
@@ -1497,7 +1536,17 @@ function switchTab(name) {
   document.getElementById('tab-' + name).classList.add('active');
   document.querySelector(`[data-tab="${name}"]`).classList.add('active');
 
-  if (name === 'inbox') loadInbox();
+  if (name === 'inbox') {
+    loadInbox();
+    // Fire pending cinematic if one is waiting
+    if (pendingCinematic && cinematicPendingLetterId) {
+      pendingCinematic = false;
+      setTimeout(() => {
+        const letter = allLetters.find(l => l.id === cinematicPendingLetterId);
+        triggerCinematic(cinematicPendingLetterId, letter ? letter.type : 'letter');
+      }, 400);
+    }
+  }
   if (name === 'archive') loadArchive();
   if (name === 'outgoing') loadOutgoing();
   if (name === 'seals') loadSeals();
@@ -1510,15 +1559,19 @@ function startNotifPoll() {
   notifInterval = setInterval(checkNotifs, 30000);
 }
 
+let lastUnreadCount = 0;
+
 async function checkNotifs() {
-  const res = await api('getUnreadCount', {
+  const res = await api('getLetters', {
     username: currentUser.username,
     party: currentUser.party,
     role: currentUser.role
   });
   if (!res.success) return;
 
-  const count = res.count;
+  const unread = (res.letters || []).filter(l => l.status === 'unread' && !l.archive_push);
+  const count = unread.length;
+
   const wrapper = document.getElementById('notif-wrapper');
   const badge = document.getElementById('notif-badge');
   const icon = document.getElementById('notif-icon');
@@ -1526,14 +1579,36 @@ async function checkNotifs() {
 
   wrapper.style.display = 'flex';
 
+  // Check if new mail arrived since last check
+  const newMail = count > lastUnreadCount;
+  const newestUnread = unread[0];
+
+  if (newMail && newestUnread) {
+    const onInbox = document.getElementById('tab-inbox').classList.contains('active');
+    const overlayOpen = document.getElementById('letter-overlay').classList.contains('active');
+
+    if (onInbox && !overlayOpen) {
+      // Fire cinematic immediately
+      triggerCinematic(newestUnread.id, newestUnread.type || 'letter');
+    } else {
+      // Hold it -- fire when they return to inbox
+      pendingCinematic = true;
+      cinematicPendingLetterId = newestUnread.id;
+    }
+  }
+
+  lastUnreadCount = count;
+
   if (count > 0) {
     badge.textContent = count;
     badge.classList.remove('hidden');
     icon.classList.add('shaking');
     text.style.display = 'inline';
+    scheduleJostle();
   } else {
     badge.classList.add('hidden');
     icon.classList.remove('shaking');
+    clearTimeout(jostleTimeout);
     text.style.display = 'none';
   }
 }
@@ -2087,6 +2162,8 @@ async function submitLetter() {
   const pageInputs = document.querySelectorAll('.page-url-input');
   const pages = Array.from(pageInputs).map(i => i.value.trim()).filter(Boolean);
 
+  const archivePush = document.getElementById('c-archive-push').checked;
+
   const body = {
     type,
     sender_name: document.getElementById('c-sender').value,
@@ -2104,13 +2181,14 @@ async function submitLetter() {
     pages_json: JSON.stringify(pages),
     parcel_image_url: document.getElementById('c-parcel-img')?.value || '',
     parcel_description: document.getElementById('c-parcel-desc')?.value || '',
+    archive_push: archivePush,
   };
 
   const res = await api('sendLetter', body);
   if (res.success) {
-    toast('Letter sent via snail. 🐌');
+    toast(archivePush ? 'Silently archived. 🐌' : 'Letter sent via snail. 🐌');
     resetCompose();
-    checkNotifs();
+    if (!archivePush) checkNotifs();
   } else {
     toast('Something went wrong: ' + res.error);
   }
@@ -2125,6 +2203,7 @@ function resetCompose() {
   document.getElementById('page-url-list').innerHTML = '';
   document.getElementById('c-parcel-img').value = '';
   document.getElementById('c-parcel-desc').value = '';
+  document.getElementById('c-archive-push').checked = false;
   pageUrlCount = 0;
   addPageUrl();
 }
@@ -2245,6 +2324,151 @@ async function doDeleteLetter(id) {
     checkNotifs();
   } else {
     toast('Could not delete: ' + res.error);
+  }
+}
+
+// ── CINEMATIC ──
+let cinematicPendingLetterId = null;
+let jostleTimeout = null;
+let lastInboxVisit = Date.now();
+let pendingCinematic = false;
+
+function scheduleJostle() {
+  clearTimeout(jostleTimeout);
+  const delay = (5000 + Math.random() * 5000);
+  jostleTimeout = setTimeout(() => {
+    const icon = document.getElementById('notif-icon');
+    if (icon && icon.classList.contains('shaking')) {
+      // Remove and re-add the class to retrigger animation
+      icon.classList.remove('shaking');
+      void icon.offsetWidth;
+      icon.classList.add('shaking');
+      scheduleJostle();
+    }
+  }, delay);
+}
+
+function triggerCinematic(letterId, type) {
+  cinematicPendingLetterId = letterId;
+  const el = document.getElementById('mail-cinematic');
+  const backdrop = document.getElementById('cinematic-backdrop');
+  const magic = document.getElementById('cinematic-magic');
+  const content = document.getElementById('cinematic-content');
+  const snail = document.getElementById('cinematic-snail');
+  const deliveryEmoji = document.getElementById('cinematic-delivery-emoji');
+  const title = document.getElementById('cinematic-title');
+  const buttons = document.getElementById('cinematic-buttons');
+
+  deliveryEmoji.textContent = type === 'parcel' ? '📦' : '✉️';
+
+  // Reset
+  backdrop.style.opacity = '0';
+  magic.style.opacity = '0';
+  magic.innerHTML = '';
+  content.style.opacity = '0';
+  content.style.transform = 'scale(0.8)';
+  snail.style.opacity = '0';
+  snail.style.transform = 'translateY(20px)';
+  deliveryEmoji.style.opacity = '0';
+  deliveryEmoji.style.transform = 'translateY(20px)';
+  title.style.opacity = '0';
+  title.style.transform = 'translateY(10px)';
+  buttons.style.opacity = '0';
+  buttons.style.transform = 'translateY(10px)';
+
+  el.style.display = 'flex';
+  el.style.pointerEvents = 'all';
+
+  // Spawn magic waves
+  for (let i = 0; i < 8; i++) {
+    const wave = document.createElement('div');
+    const size = 100 + i * 80;
+    wave.style.cssText = `
+      position:absolute;
+      left:50%; top:50%;
+      transform:translate(-50%,-50%);
+      width:${size}px; height:${size}px;
+      border-radius:50%;
+      border:2px solid rgba(140,60,200,${0.6 - i*0.06});
+      animation: waveExpand ${1.5 + i*0.3}s ease-out ${i*0.15}s forwards;
+      pointer-events:none;
+    `;
+    magic.appendChild(wave);
+  }
+
+  // Add wave keyframes if not already added
+  if (!document.getElementById('wave-style')) {
+    const style = document.createElement('style');
+    style.id = 'wave-style';
+    style.textContent = `
+      @keyframes waveExpand {
+        0% { transform:translate(-50%,-50%) scale(0); opacity:1; }
+        100% { transform:translate(-50%,-50%) scale(2.5); opacity:0; }
+      }
+      @keyframes snailHop {
+        0%,100% { transform:translateY(0); }
+        30% { transform:translateY(-20px) rotate(-5deg); }
+        60% { transform:translateY(-8px) rotate(3deg); }
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  // Sequence
+  setTimeout(() => { backdrop.style.opacity = '1'; }, 50);
+  setTimeout(() => { magic.style.opacity = '1'; }, 200);
+  setTimeout(() => {
+    content.style.opacity = '1';
+    content.style.transform = 'scale(1)';
+  }, 600);
+  setTimeout(() => {
+    deliveryEmoji.style.opacity = '1';
+    deliveryEmoji.style.transform = 'translateY(0)';
+  }, 800);
+  setTimeout(() => {
+    snail.style.opacity = '1';
+    snail.style.transform = 'translateY(0)';
+  }, 950);
+  setTimeout(() => {
+    snail.style.animation = 'snailHop 0.7s ease-in-out';
+    setTimeout(() => { snail.style.animation = ''; }, 700);
+  }, 1300);
+  setTimeout(() => {
+    title.style.opacity = '1';
+    title.style.transform = 'translateY(0)';
+  }, 1500);
+  setTimeout(() => {
+    buttons.style.opacity = '1';
+    buttons.style.transform = 'translateY(0)';
+  }, 1800);
+}
+
+function closeCinematic() {
+  const el = document.getElementById('mail-cinematic');
+  const backdrop = document.getElementById('cinematic-backdrop');
+  backdrop.style.opacity = '0';
+  setTimeout(() => {
+    el.style.display = 'none';
+    el.style.pointerEvents = 'none';
+  }, 500);
+}
+
+function cinematicOpenNow() {
+  closeCinematic();
+  if (cinematicPendingLetterId) {
+    setTimeout(() => openLetter(cinematicPendingLetterId), 300);
+    cinematicPendingLetterId = null;
+  }
+}
+
+function cinematicOpenLater() {
+  closeCinematic();
+  cinematicPendingLetterId = null;
+  // Soft jostle notification
+  const icon = document.getElementById('notif-icon');
+  if (icon) {
+    icon.classList.add('shaking');
+    scheduleJostle();
   }
 }
 
