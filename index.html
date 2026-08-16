@@ -2472,11 +2472,14 @@ function closeCinematic() {
   }, 500);
 }
 
-function cinematicOpenNow() {
+async function cinematicOpenNow() {
+  const letterId = cinematicPendingLetterId;
+  cinematicPendingLetterId = null;
   closeCinematic();
-  if (cinematicPendingLetterId) {
-    setTimeout(() => openLetter(cinematicPendingLetterId), 300);
-    cinematicPendingLetterId = null;
+  if (letterId) {
+    // Make sure inbox is loaded first so allLetters is populated
+    await loadInbox();
+    setTimeout(() => openLetter(letterId), 300);
   }
 }
 
