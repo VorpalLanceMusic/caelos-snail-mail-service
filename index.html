@@ -1174,18 +1174,24 @@
               <option value="">-- No Seal --</option>
             </select>
             <div class="mt-1">
-              <div class="rgb-row">
-                <div class="rgb-channel">
-                  <label>R <span id="r-val">255</span></label>
-                  <input type="range" id="seal-r" min="0" max="255" value="255" oninput="updateSealPreview()">
-                </div>
-                <div class="rgb-channel">
-                  <label>G <span id="g-val">255</span></label>
-                  <input type="range" id="seal-g" min="0" max="255" value="255" oninput="updateSealPreview()">
-                </div>
-                <div class="rgb-channel">
-                  <label>B <span id="b-val">255</span></label>
-                  <input type="range" id="seal-b" min="0" max="255" value="255" oninput="updateSealPreview()">
+              <label style="display:flex;align-items:center;gap:0.5rem;cursor:pointer;margin-bottom:0.5rem;">
+                <input type="checkbox" id="seal-original-colors" style="width:14px;height:14px;accent-color:var(--gold);cursor:pointer;" onchange="toggleOriginalColors()">
+                <span style="font-family:'Cinzel',serif;font-size:0.65rem;color:var(--text-secondary);letter-spacing:0.1em;text-transform:uppercase;">Use original colors</span>
+              </label>
+              <div id="rgb-sliders">
+                <div class="rgb-row">
+                  <div class="rgb-channel">
+                    <label>R <span id="r-val">255</span></label>
+                    <input type="range" id="seal-r" min="0" max="255" value="255" oninput="updateSealPreview()">
+                  </div>
+                  <div class="rgb-channel">
+                    <label>G <span id="g-val">255</span></label>
+                    <input type="range" id="seal-g" min="0" max="255" value="255" oninput="updateSealPreview()">
+                  </div>
+                  <div class="rgb-channel">
+                    <label>B <span id="b-val">255</span></label>
+                    <input type="range" id="seal-b" min="0" max="255" value="255" oninput="updateSealPreview()">
+                  </div>
                 </div>
               </div>
             </div>
@@ -2139,8 +2145,17 @@ async function loadSealsForCompose() {
   });
 }
 
+function toggleOriginalColors() {
+  const useOriginal = document.getElementById('seal-original-colors').checked;
+  const sliders = document.getElementById('rgb-sliders');
+  sliders.style.opacity = useOriginal ? '0.3' : '1';
+  sliders.style.pointerEvents = useOriginal ? 'none' : 'auto';
+  updateSealPreview();
+}
+
 function updateSealPreview() {
   const url = document.getElementById('c-seal-select').value;
+  const useOriginal = document.getElementById('seal-original-colors').checked;
   const r = document.getElementById('seal-r').value;
   const g = document.getElementById('seal-g').value;
   const b = document.getElementById('seal-b').value;
@@ -2150,7 +2165,8 @@ function updateSealPreview() {
 
   const preview = document.getElementById('seal-preview-box');
   if (url) {
-    preview.innerHTML = `<img src="${url}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;filter:${getSealFilter(+r,+g,+b)};">`;
+    const filterStr = useOriginal ? 'none' : getSealFilter(+r,+g,+b);
+    preview.innerHTML = `<img src="${url}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;filter:${filterStr};">`;
   } else {
     preview.innerHTML = '🔴';
   }
@@ -2174,9 +2190,10 @@ async function submitLetter() {
     recipient_username: recipType === 'player' ? document.getElementById('c-recipient-username').value : '',
     recipient_party: recipType === 'party' ? document.getElementById('c-recipient-party').value : '',
     seal_image_url: document.getElementById('c-seal-select').value,
-    seal_tint_r: document.getElementById('seal-r').value,
-    seal_tint_g: document.getElementById('seal-g').value,
-    seal_tint_b: document.getElementById('seal-b').value,
+    seal_original_colors: document.getElementById('seal-original-colors').checked,
+    seal_tint_r: document.getElementById('seal-original-colors').checked ? 255 : document.getElementById('seal-r').value,
+    seal_tint_g: document.getElementById('seal-original-colors').checked ? 255 : document.getElementById('seal-g').value,
+    seal_tint_b: document.getElementById('seal-original-colors').checked ? 255 : document.getElementById('seal-b').value,
     ambient_effect: document.getElementById('c-ambient').value,
     pages_json: JSON.stringify(pages),
     parcel_image_url: document.getElementById('c-parcel-img')?.value || '',
@@ -2204,6 +2221,8 @@ function resetCompose() {
   document.getElementById('c-parcel-img').value = '';
   document.getElementById('c-parcel-desc').value = '';
   document.getElementById('c-archive-push').checked = false;
+  document.getElementById('seal-original-colors').checked = false;
+  toggleOriginalColors();
   pageUrlCount = 0;
   addPageUrl();
 }
