@@ -826,8 +826,8 @@
   }
 
   .seal-preview-circle {
-    width: 48px;
-    height: 48px;
+    width: 72px;
+    height: 72px;
     border-radius: 50%;
     object-fit: cover;
     flex-shrink: 0;
@@ -836,7 +836,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.5rem;
+    font-size: 2rem;
   }
 
   /* ── SEALS LIBRARY ── */
@@ -864,8 +864,8 @@
   .seal-item.selected { border-color: var(--gold); box-shadow: 0 0 0 2px var(--gold-dim); }
 
   .seal-item img {
-    width: 56px;
-    height: 56px;
+    width: 84px;
+    height: 84px;
     border-radius: 50%;
     object-fit: cover;
     border: 1px solid var(--border);
@@ -1564,14 +1564,17 @@ function renderLetterList(containerId, letters) {
     const dateStr = l.caelos_date || l.irl_date || '';
 
     return `
-      <div class="letter-card ${isUnread ? 'unread' : ''}" onclick="openLetter('${l.id}')">
-        ${sealHtml}
-        <div class="letter-card-info">
-          <div class="letter-card-sender">${l.sender_name || 'Unknown Sender'}</div>
-          <div class="letter-card-label">${l.label || l.return_address || ''}</div>
-          <div class="letter-card-date">${dateStr}</div>
+      <div class="letter-card ${isUnread ? 'unread' : ''}" style="position:relative;">
+        <div style="flex:1;display:flex;align-items:center;gap:1rem;cursor:pointer;" onclick="openLetter('${l.id}')">
+          ${sealHtml}
+          <div class="letter-card-info">
+            <div class="letter-card-sender">${l.sender_name || 'Unknown Sender'}</div>
+            <div class="letter-card-label">${l.label || l.return_address || ''}</div>
+            <div class="letter-card-date">${dateStr}</div>
+          </div>
+          <div class="letter-card-type">${typeIcon}</div>
         </div>
-        <div class="letter-card-type">${typeIcon}</div>
+        ${currentUser && currentUser.role === 'dm' ? `<button class="btn btn-danger btn-sm" style="margin-left:0.5rem;flex-shrink:0;" onclick="event.stopPropagation();confirmDeleteLetter('${l.id}', '${(l.sender_name||'this letter').replace(/'/g,"\'")}')">🗑</button>` : ''}
       </div>`;
   }).join('');
 }
@@ -2030,24 +2033,17 @@ function toggleRecipientType() {
 }
 
 async function populatePlayerSelect() {
-  const res = await api('getLetters', {
-    username: currentUser.username,
-    party: currentUser.party,
-    role: 'dm'
-  });
-  // We populate from accounts via a separate call -- for now hardcode common options
-  // In future can add getAccounts endpoint
+  const res = await api('getAccounts', {});
   const sel = document.getElementById('c-recipient-username');
-  sel.innerHTML = `
-    <option value="ryan">ryan</option>
-    <option value="kjersten">kjersten</option>
-    <option value="amber">amber</option>
-    <option value="beth">beth</option>
-    <option value="pb1">pb1</option>
-    <option value="pb2">pb2</option>
-    <option value="pb3">pb3</option>
-    <option value="dm">dm (yourself)</option>
-  `;
+  sel.innerHTML = '<option value="dm">dm (yourself — test)</option>';
+  if (res.success && res.accounts) {
+    res.accounts.forEach(a => {
+      const opt = document.createElement('option');
+      opt.value = a.username;
+      opt.textContent = `${a.display_name} (${a.party})`;
+      sel.appendChild(opt);
+    });
+  }
 }
 
 async function loadSealsForCompose() {
@@ -2224,6 +2220,25 @@ async function addSeal() {
 async function deleteSeal(id) {
   const res = await api('deleteSeal', { seal_id: id });
   if (res.success) { toast('Seal removed.'); loadSeals(); }
+}
+
+// ── DELETE LETTER (DM only) ──
+function confirmDeleteLetter(id, senderName) {
+  if (confirm(`Delete letter from "${senderName}"? This cannot be undone.`)) {
+    doDeleteLetter(id);
+  }
+}
+
+async function doDeleteLetter(id) {
+  const res = await api('deleteLetter', { letter_id: id });
+  if (res.success) {
+    toast('Letter deleted.');
+    loadInbox();
+    loadArchive();
+    checkNotifs();
+  } else {
+    toast('Could not delete: ' + res.error);
+  }
 }
 
 // ── INIT ──
