@@ -401,6 +401,8 @@
     flex-direction: column;
     height: 100%;
     align-items: center;
+    overflow: hidden;
+    min-height: 0;
   }
 
   .overlay-header {
@@ -536,6 +538,7 @@
     padding: 1.5rem;
     overflow-y: auto;
     gap: 1rem;
+    min-height: 0;
   }
 
   #letter-reading.active { display: flex; }
@@ -548,13 +551,15 @@
     border-radius: 2px;
     overflow: hidden;
     cursor: zoom-in;
-    transition: transform 0.3s ease;
+    transition: max-width 0.3s ease;
+    flex-shrink: 0;
   }
 
   .letter-image-container.zoomed {
     cursor: zoom-out;
     max-width: min(900px, 95vw);
-    transform: none;
+    overflow-y: auto;
+    max-height: 70vh;
   }
 
   .letter-image-container img {
